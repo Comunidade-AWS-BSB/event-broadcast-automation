@@ -85,8 +85,6 @@ The same instance powers both the old n8n flows and the new Amplify Lambdas, so 
 - `evolution-self-hosting.md` - describes the EC2 t3.small, Docker, Nginx, TLS, and pairing steps that keep our Evolution API online.
 - `legacy-n8n-workflow.md` - documents the original automation based on Google Sheets + n8n for those who still want a low-code entry point.
 
-These snippets let a curious UGL jump from the diagrams into the actual TypeScript implementation when needed.
-
 ## From n8n workflows to a platform
 Before this Amplify redesign we maintained the [Solu-o-Auotma-o-para-Eventos](https://github.com/Comunidade-AWS-BSB/Solu-o-Auotma-o-para-Eventos) repository with Google Sheets, n8n, and the same Evolution API container. The new platform keeps the hosting model but replaces spreadsheets and cron-like flows with:
 - AppSync/DynamoDB schema for broadcasts and delivery logs
