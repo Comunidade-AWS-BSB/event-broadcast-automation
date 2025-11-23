@@ -69,13 +69,31 @@ These tables are surfaced as GraphQL types in Amplify Data, so the admin UI can 
 - **Amazon Cognito** - stores user profiles and phone numbers; Lambdas list recipients from here.
 - **AWS Lambda** - two functions (`schedule-broadcast` and `start-broadcast`) handle orchestration and delivery.
 - **Amazon EventBridge Scheduler** - fires the delivery Lambda at either a specific time or on a cron schedule.
-- **EvolutionAPI (third-party open-source API)** - WhatsApp messaging provider invoked by `start-broadcast`.
+- **EvolutionAPI (open-source WhatsApp gateway)** - our Lambdas call the `/message/sendText/{instance}` endpoint hosted on our own EC2 box; see [Self-hosted Evolution API](evolution-self-hosting.md) for details and links to the [official docs](https://doc.evolution-api.com/v2/pt/get-started/introduction).
+
+### Why EvolutionAPI?
+EvolutionAPI keeps the actual WhatsApp Web session inside our AWS account. Authenticated requests include:
+- Base URL `https://evolution.seudominio.com.br`
+- Instance ID identifying the paired WhatsApp device
+- `apiKey` header stored as the Amplify secret `EVOLUTION_API_KEY`
+
+The same instance powers both the old n8n flows and the new Amplify Lambdas, so no matter which platform triggers a broadcast the message is routed through the self-hosted connector.
 
 ## Code deep dive
 - `schema-scheduler.md` - includes a trimmed version of the Amplify schema for `EventBroadcast`/`OutboundMessage` plus the scheduling Lambda handler.
 - `start-broadcast.md` - focuses on the delivery Lambda loop, Cognito recipient lookup, and EvolutionAPI call pattern.
+- `evolution-self-hosting.md` - describes the EC2 t3.small, Docker, Nginx, TLS, and pairing steps that keep our Evolution API online.
+- `legacy-n8n-workflow.md` - documents the original automation based on Google Sheets + n8n for those who still want a low-code entry point.
 
 These snippets let a curious UGL jump from the diagrams into the actual TypeScript implementation when needed.
+
+## From n8n workflows to a platform
+Before this Amplify redesign we maintained the [Solu-o-Auotma-o-para-Eventos](https://github.com/Comunidade-AWS-BSB/Solu-o-Auotma-o-para-Eventos) repository with Google Sheets, n8n, and the same Evolution API container. The new platform keeps the hosting model but replaces spreadsheets and cron-like flows with:
+- AppSync/DynamoDB schema for broadcasts and delivery logs
+- Cognito as the source of recipient data, instead of manual Sheets
+- EventBridge Scheduler for reliable triggers
+
+Read [legacy-n8n-workflow.md](legacy-n8n-workflow.md) for the full recipe if you want to replicate the earlier approach or understand how we evolved the architecture.
 
 ---
 
