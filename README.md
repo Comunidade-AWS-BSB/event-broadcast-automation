@@ -1,7 +1,7 @@
 # Event Broadcast Automation Samples
 
 User Group leaders often need to nudge their members before an event starts.  
-This repository explains—in plain language—how our automation sends WhatsApp notifications via EvolutionAPI using AWS Amplify, AppSync, DynamoDB, and a pair of Lambdas. The goal is to give DevChat attendees a quick mental model before they dive into code.
+This repository explains how our automation sends WhatsApp notifications via EvolutionAPI using AWS Amplify, AppSync, DynamoDB, and a pair of Lambdas.
 
 ## What this feature does
 - Admins create a **Broadcast** in the web app, choose the message text, and decide when it should run (`NOW`, `AT`, or `CRON` schedule).
@@ -24,11 +24,11 @@ graph TD
 ```
 
 ### How the services collaborate
-1. **Admin UI** – uses Amplify Data (GraphQL) to create or edit `EventBroadcast` items.
-2. **AppSync + DynamoDB** – store the template text, schedule type, and the resulting `OutboundMessage` log entries.
-3. **`schedule-broadcast` Lambda** – takes the admin request, builds the right cron/`at()` expression, and asks EventBridge Scheduler to invoke `start-broadcast` at the right time.
-4. **Amazon EventBridge Scheduler** – guarantees the trigger fires exactly when requested (either immediately or on a recurring cron).
-5. **`start-broadcast` Lambda** – fetches the `EventBroadcast`, lists user phones from Cognito, sends WhatsApp messages through EvolutionAPI, and writes status rows back to DynamoDB.
+1. **Admin UI** - uses Amplify Data (GraphQL) to create or edit `EventBroadcast` items.
+2. **AppSync + DynamoDB** - store the template text, schedule type, and the resulting `OutboundMessage` log entries.
+3. **`schedule-broadcast` Lambda** - takes the admin request, builds the right cron/`at()` expression, and asks EventBridge Scheduler to invoke `start-broadcast` at the right time.
+4. **Amazon EventBridge Scheduler** - guarantees the trigger fires exactly when requested (either immediately or on a recurring cron).
+5. **`start-broadcast` Lambda** - fetches the `EventBroadcast`, lists user phones from Cognito, sends WhatsApp messages through EvolutionAPI, and writes status rows back to DynamoDB.
 
 ```mermaid
 sequenceDiagram
@@ -57,22 +57,27 @@ sequenceDiagram
 ```
 
 ## DynamoDB data model (via Amplify Data)
-- **EventBroadcast** – stores the message template, schedule type, and status.
-- **OutboundMessage** – captures per-user delivery attempts (`PENDING`, `SENT`, `RECEIVED`), provider IDs, and timestamps.
+- **EventBroadcast** - stores the message template, schedule type, and status.
+- **OutboundMessage** - captures per-user delivery attempts (`PENDING`, `SENT`, `RECEIVED`), provider IDs, and timestamps.
 
 These tables are surfaced as GraphQL types in Amplify Data, so the admin UI can query and mutate them securely (restricted to the `ADMINS` group).
 
 ## Key AWS & partner components
-- **AWS Amplify** – bootstraps the GraphQL schema, generates clients, and injects env vars into the Lambdas.
-- **AWS AppSync** – hosts the GraphQL API that the UI and Lambdas use.
-- **Amazon DynamoDB** – backing store for broadcasts and delivery logs.
-- **Amazon Cognito** – stores user profiles and phone numbers; Lambdas list recipients from here.
-- **AWS Lambda** – two functions (`schedule-broadcast` and `start-broadcast`) handle orchestration and delivery.
-- **Amazon EventBridge Scheduler** – fires the delivery Lambda at either a specific time or on a cron schedule.
-- **EvolutionAPI (partner)** – WhatsApp messaging provider invoked by `start-broadcast`.
+- **AWS Amplify** - bootstraps the GraphQL schema, generates clients, and injects env vars into the Lambdas.
+- **AWS AppSync** - hosts the GraphQL API that the UI and Lambdas use.
+- **Amazon DynamoDB** - backing store for broadcasts and delivery logs.
+- **Amazon Cognito** - stores user profiles and phone numbers; Lambdas list recipients from here.
+- **AWS Lambda** - two functions (`schedule-broadcast` and `start-broadcast`) handle orchestration and delivery.
+- **Amazon EventBridge Scheduler** - fires the delivery Lambda at either a specific time or on a cron schedule.
+- **EvolutionAPI (third-party open-source API)** - WhatsApp messaging provider invoked by `start-broadcast`.
 
 ## Code deep dive
-- `schema-scheduler.md` – includes a trimmed version of the Amplify schema for `EventBroadcast`/`OutboundMessage` plus the scheduling Lambda handler.
-- `start-broadcast.md` – focuses on the delivery Lambda loop, Cognito recipient lookup, and EvolutionAPI call pattern.
+- `schema-scheduler.md` - includes a trimmed version of the Amplify schema for `EventBroadcast`/`OutboundMessage` plus the scheduling Lambda handler.
+- `start-broadcast.md` - focuses on the delivery Lambda loop, Cognito recipient lookup, and EvolutionAPI call pattern.
 
 These snippets let a curious UGL jump from the diagrams into the actual TypeScript implementation when needed.
+
+---
+
+### Developed by Miguel Fernando/FernandoAurelius, member of the AWS User Group Brasília.
+- *If you liked this solution please feel free to reach me out in [LinkedIn](https://linkedin.com/in/devflores) or check my [GitHub](https://github.com/FernandoAurelius) profile!*
